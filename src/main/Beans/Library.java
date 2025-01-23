@@ -1,5 +1,7 @@
 package main.Beans;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import main.DbConnection;
 
 import java.sql.*;
@@ -7,20 +9,24 @@ import java.sql.*;
 public class Library {
     public Book book;
     public String libraryname;
+    private Connection connection;
 
-    public Library(Book book,String libraryname){
+    public Library(Book book,String libraryname) {
         this.book = book;
         this.libraryname = libraryname;
     }
-
-    public void display(){
-        try{
-            Class.forName("org.postgresql.Driver");
-        }catch (ClassNotFoundException e){
+    @PostConstruct
+    public void dbinitial(){
+        try {
+            connection = DbConnection.getConnection();
+        }catch (SQLException e){
             e.printStackTrace();
         }
+    }
+
+    public void display(){
         String selectquery= "SELECT * FROM library";
-        try(Connection connection = DbConnection.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(selectquery)){
+        try(PreparedStatement preparedStatement = connection.prepareStatement(selectquery)){
             ResultSet resultSet = preparedStatement.executeQuery();
 
             while(resultSet.next()){
@@ -31,4 +37,9 @@ public class Library {
             e.printStackTrace();
         }
     }
+    @PreDestroy
+    public void cleanup() throws SQLException {
+        connection.close();
+    }
+
 }
