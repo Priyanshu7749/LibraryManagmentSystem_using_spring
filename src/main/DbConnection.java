@@ -1,17 +1,15 @@
 package main;
 
 import main.Beans.Library;
+import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.Properties;
 
+
 public class DbConnection {
-    public static final String url = "jdbc:postgresql://localhost:5432/librarymangment";
-    public static final String username = "postgres";
-    public static final String password = getPassword();
 
     public static String getPassword() {
         Properties properties = new Properties();
@@ -31,18 +29,23 @@ public class DbConnection {
         }
     }
 
-    public static Connection getConnection() throws SQLException {
-        try {
-            Class.forName("org.postgresql.Driver");
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            throw new SQLException("JDBC Driver not found.", e);
-        }
+    @Bean
+    public DriverManagerDataSource source(){
 
-        if (password == null) {
-            throw new SQLException("Database password is null");
-        }
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("org.postgresql.Driver");
+        dataSource.setUrl("jdbc:postgresql://localhost:5432/librarymangment");
+        dataSource.setUsername("postgres");
+        dataSource.setPassword(getPassword());
 
-        return DriverManager.getConnection(url, username, password);
+        return dataSource;
+    }
+
+    @Bean
+    public JdbcTemplate template(){
+        JdbcTemplate jdbcTemplate = new JdbcTemplate();
+        jdbcTemplate.setDataSource(source());
+
+        return jdbcTemplate;
     }
 }

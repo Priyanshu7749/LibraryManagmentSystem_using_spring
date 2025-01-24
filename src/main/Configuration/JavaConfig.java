@@ -7,11 +7,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 
-import java.util.Scanner;
-
 @Configuration
 public class JavaConfig {
-    //    Scanner scanner = new Scanner(System.in);
     @Bean
     @Scope("singleton")
     public Author author() {
@@ -30,4 +27,5 @@ public class JavaConfig {
     public Library library(Book book){
         return new Library(book,null);
     }
+
 }

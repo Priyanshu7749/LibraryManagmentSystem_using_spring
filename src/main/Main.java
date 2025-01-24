@@ -16,7 +16,6 @@ public class Main {
 
         Book book = context.getBean(Book.class);
         Library library = context.getBean(Library.class);
-//        library.dbinitial();
 
         while (true) {
             System.out.println("\nChoose an option:");

@@ -3,16 +3,19 @@ package main.Beans;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import main.DbConnection;
+import main.mappers.LibraryRowMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.sql.*;
+import java.util.List;
 
-//@Component
 public class Library {
     public Book book;
     public String libraryname;
-    private Connection connection;
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     public Library(Book book, String libraryname) {
@@ -22,124 +25,98 @@ public class Library {
 
     @PostConstruct
     public void dbinitial() {
-        try {
-            connection = DbConnection.getConnection();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        ApplicationContext context = new AnnotationConfigApplicationContext(DbConnection.class);
+        jdbcTemplate = context.getBean(JdbcTemplate.class);
     }
 
 
     public void Adddata() {
 
         String insert_query = "INSERT INTO library(author,book_title,book_price,library_name) VALUES(?,?,?,?)";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(insert_query)) {
-            preparedStatement.setString(1, book.getAuthor().getName());
-            preparedStatement.setString(2, book.getTitle());
-            preparedStatement.setDouble(3, book.getPrice());
-            preparedStatement.setString(4, libraryname);
 
-            int result = preparedStatement.executeUpdate();
-            if (result > 0) {
-                System.out.println("Data inserted successfully.");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        int insert_result = jdbcTemplate.update(insert_query,book.getAuthor().name,book.getTitle(),book.getPrice(),libraryname);
+        if (insert_result > 0) {
+            System.out.println("Data inserted successfully.");
+        }
+        else{
+            System.out.println("Data not inserted.");
         }
     }
 
     public void display() {
         String selectQuery = "SELECT * FROM library";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                System.out.println("Title: " + resultSet.getString("book_title"));
-                System.out.println("Library name: " + resultSet.getString("library_name"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        List<Library> libraryList = jdbcTemplate.query(selectQuery,new LibraryRowMapper());
+        for(Library library : libraryList){
+            System.out.println("Book Title:"+library.book.getTitle());
+            System.out.println("Library Name:"+library.libraryname);
         }
     }
 
     public void removeData(String title) {
         String deleteQuery = "DELETE FROM library WHERE book_title = ?";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(deleteQuery)) {
-            preparedStatement.setString(1, title);
-            int result = preparedStatement.executeUpdate();
-            if (result > 0) {
-                System.out.println("Book removed");
-            } else {
-                System.out.println("Book not found");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+
+        int delete_result = jdbcTemplate.update(deleteQuery,title);
+        if (delete_result > 0) {
+            System.out.println("Data inserted successfully.");
+        }
+        else{
+            System.out.println("Data not inserted.");
         }
     }
 
     public void checkAvailability(String title) {
         String selectQuery = "SELECT * FROM library WHERE book_title = ?";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
-            preparedStatement.setString(1, title);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                System.out.println("Book is available.");
-            } else {
-                System.out.println("Book is not available.");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        List<Library> checkavailable = jdbcTemplate.query(selectQuery, new LibraryRowMapper(), title);
+
+        if (checkavailable.isEmpty()) {
+            System.out.println("No books found for the title: " + title);
+        } else {
+            System.out.println("Book found.");
         }
     }
 
+
     public void clearBooksInLibrary(String libraryName) {
-        String deleteQuery = "DELETE FROM library WHERE library_name = ?";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(deleteQuery)) {
-            preparedStatement.setString(1, libraryName);
-            int result = preparedStatement.executeUpdate();
-            if (result > 0) {
-                System.out.println("Cleared all books in the library.");
-            } else {
-                System.out.println("Library not found.");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        String clearbookquery = "DELETE FROM library WHERE library_name = ?";
+        int clearbook_result = jdbcTemplate.update(clearbookquery,libraryName);
+        if (clearbook_result > 0) {
+            System.out.println("Library cleared.");
+        }
+        else{
+            System.out.println("no library found.");
         }
     }
 
     public void updateBookPrice(String title, double newPrice) {
         String updateQuery = "UPDATE library SET book_price = ? WHERE book_title = ?";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
-            preparedStatement.setDouble(1, newPrice);
-            preparedStatement.setString(2, title);
-            int result = preparedStatement.executeUpdate();
-            if (result > 0) {
-                System.out.println("Book price updated.");
-            } else {
-                System.out.println("Book not found.");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        int update_result = jdbcTemplate.update(updateQuery,newPrice,title);
+        if (update_result > 0) {
+            System.out.println("book price updated.");
+        }
+        else{
+            System.out.println("book not found.");
         }
     }
 
     public void findBooksByAuthor(String authorName) {
         String selectQuery = "SELECT * FROM library WHERE author = ?";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
-            preparedStatement.setString(1, authorName);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                System.out.println("Title: " + resultSet.getString("book_title"));
-                System.out.println("Library name: " + resultSet.getString("library_name"));
+
+        List<Library> books = jdbcTemplate.query(selectQuery, new LibraryRowMapper(), authorName);
+
+        if (books.isEmpty()) {
+            System.out.println("No books found for the author: " + authorName);
+        } else {
+            System.out.println("Books by " + authorName + ":");
+            for (Library library : books) {
+                System.out.println("Book Title: " + library.book.getTitle());
+                System.out.println("Library Name: " + library.libraryname);
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
     }
 
 
     @PreDestroy
     public void cleanup() throws SQLException {
-        connection.close();
     }
 
     @Override
