@@ -24,7 +24,7 @@ public class Library {
     }
 
     @PostConstruct
-    public void dbinitial() {
+    public void initializeDB() {
         ApplicationContext context = new AnnotationConfigApplicationContext(DbConnection.class);
         jdbcTemplate = context.getBean(JdbcTemplate.class);
     }

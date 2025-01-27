@@ -4,6 +4,14 @@
 
 <web-app>
   <display-name>Archetype Created Web Application</display-name>
+  <servlet>
+    <servlet-name>myds</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>myds</servlet-name>
+    <url-pattern>/</url-pattern>
+  </servlet-mapping>
   <welcome-file-list>
     <welcome-file>
       addform.jsp

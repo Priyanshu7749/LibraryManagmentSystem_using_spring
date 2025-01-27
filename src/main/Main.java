@@ -51,7 +51,7 @@ public class Main {
 
                     book = new Book(author, bookTitle, bookPrice);
                     library = new Library(book, libraryName);
-                    library.dbinitial();
+                    library.initializeDB();
                     library.Adddata();
                     break;
 
@@ -99,6 +99,6 @@ public class Main {
                     System.out.println("Invalid choice. Please try again.");
                     break;
             }
-            }
         }
     }
+}
